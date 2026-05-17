@@ -1,0 +1,59 @@
+Smart  Hospital  -  Project  TODO
+Phase 1: Database & Schema
+Design patient table with ID, name, email, medical history
+Design analysis_results table with patient_id, diagnosis, conﬁdence_score, timestamp, 
+doctor_name, analysis_type
+Design radiology_analysis table (brain, chest, bone) with image_url, model_output, 
+conﬁdence
+Design lung_cancer_analysis table with risk_factors, prediction, conﬁdence
+Create and apply database migrations
+Phase 2: Authentication & User Management
+Setup user authentication (already in template)
+Create doctor proﬁle page with name and credentials
+Implement session persistence
+Add role-based access control (doctor, admin)
+Phase 3: Radiology Sections
+Create Brain Tumor detection section
+Image upload interface (DICOM, PNG, JPG)
+Image preview before analysis
+ML model integration for brain tumor detection
+Display diagnosis with conﬁdence score
+Create Chest Disease detection section
+Image upload interface
+Image preview
+ML model integration
+Display results with conﬁdence
+Create Bone Fracture detection sectionImage upload interface
+Image preview
+ML model integration
+Display results with conﬁdence
+Phase 4: Lung Cancer Detection
+Create risk factor input form (smoking status, age, family history, etc.)
+Implement ML model for lung cancer prediction
+Display conﬁdence-based prediction output
+Save results to database
+Phase 5: Patient Records & History
+Create patient records database schema
+Build patient history page showing all past analyses
+Display all 5 required ﬁelds: patient_id, diagnosis, conﬁdence_score, timestamp, 
+doctor_name
+Add ﬁltering and search functionality
+Add export/print functionality for medical records
+Phase 6: Dashboard & Navigation
+Create elegant dashboard layout with sidebar
+Implement persistent sidebar navigation
+Link all radiology sections
+Add quick access buttons for common tasks
+Create professional visual design
+Phase 7: Docker & Deployment
+Create Dockerﬁle for application
+Create docker-compose.yml for full stack (app + database)Add environment conﬁguration
+Test local deployment
+Document deployment instructions
+Phase 8: Testing & Reﬁnement
+Test all radiology sections
+Test patient records saving and retrieval
+Test authentication ﬂow
+Test Docker deployment
+Performance optimization
+UI/UX reﬁnement for elegance and polish
