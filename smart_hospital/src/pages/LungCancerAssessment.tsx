@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, Lung } from "lucide-react";
+import { AlertCircle, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 export default function LungCancerAssessment() {
@@ -58,7 +58,7 @@ export default function LungCancerAssessment() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="bg-red-100 p-2 rounded-lg">
-              <Lung className="w-6 h-6 text-red-600" />
+              <Activity className="w-6 h-6 text-red-600" />
             </div>
             <h1 className="text-3xl font-bold">Lung Cancer Risk Assessment</h1>
           </div>
@@ -136,7 +136,7 @@ export default function LungCancerAssessment() {
                   <Checkbox
                     id="family-history"
                     checked={familyHistory}
-                    onCheckedChange={(checked) => setFamilyHistory(checked as boolean)}
+                    onCheckedChange={(checked: boolean | 'indeterminate') => setFamilyHistory(checked === true)}
                   />
                   <Label htmlFor="family-history" className="font-normal cursor-pointer">
                     Family history of lung cancer

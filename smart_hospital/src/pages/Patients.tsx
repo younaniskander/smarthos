@@ -9,43 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
-const mockPatients = [
-  {
-    id: 1,
-    patientId: "P001",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john@example.com",
-    phone: "+1-555-0101",
-    gender: "male",
-    dateOfBirth: "1980-05-15",
-  },
-  {
-    id: 2,
-    patientId: "P002",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane@example.com",
-    phone: "+1-555-0102",
-    gender: "female",
-    dateOfBirth: "1985-08-22",
-  },
-  {
-    id: 3,
-    patientId: "P003",
-    firstName: "Robert",
-    lastName: "Brown",
-    email: "robert@example.com",
-    phone: "+1-555-0103",
-    gender: "male",
-    dateOfBirth: "1975-03-10",
-  },
-];
+import { trpc } from "@/lib/trpc";
 
 export default function Patients() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [patients, setPatients] = useState(mockPatients);
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     patientId: "",
@@ -57,12 +24,49 @@ export default function Patients() {
     dateOfBirth: "",
   });
 
+  const utils = trpc.useUtils();
+
+  // Fetch patients from the database
+  const { data: patients = [], isLoading } = trpc.patients.list.useQuery();
+
+  // Create patient mutation
+  const createMutation = trpc.patients.create.useMutation({
+    onSuccess: () => {
+      utils.patients.list.invalidate();
+      setFormData({
+        patientId: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        gender: "",
+        dateOfBirth: "",
+      });
+      setIsOpen(false);
+      toast.success("Patient added successfully");
+    },
+    onError: (error) => {
+      toast.error(`Failed to add patient: ${error.message}`);
+    },
+  });
+
+  // Delete patient mutation
+  const deleteMutation = trpc.patients.delete.useMutation({
+    onSuccess: () => {
+      utils.patients.list.invalidate();
+      toast.success("Patient deleted successfully");
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete patient: ${error.message}`);
+    },
+  });
+
   const filteredPatients = patients.filter(
     (patient) =>
       patient.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm.toLowerCase())
+      (patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false)
   );
 
   const handleAddPatient = () => {
@@ -71,28 +75,19 @@ export default function Patients() {
       return;
     }
 
-    const newPatient = {
-      id: patients.length + 1,
-      ...formData,
-    };
-
-    setPatients([...patients, newPatient]);
-    setFormData({
-      patientId: "",
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      gender: "",
-      dateOfBirth: "",
+    createMutation.mutate({
+      patientId: formData.patientId,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email || undefined,
+      phone: formData.phone || undefined,
+      gender: (formData.gender as "male" | "female" | "other") || undefined,
+      dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined,
     });
-    setIsOpen(false);
-    toast.success("Patient added successfully");
   };
 
   const handleDeletePatient = (id: number) => {
-    setPatients(patients.filter((p) => p.id !== id));
-    toast.success("Patient deleted successfully");
+    deleteMutation.mutate({ id });
   };
 
   return (
@@ -168,7 +163,7 @@ export default function Patients() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="gender">Gender</Label>
-                    <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
+                    <Select value={formData.gender} onValueChange={(value: string) => setFormData({ ...formData, gender: value })}>
                       <SelectTrigger id="gender">
                         <SelectValue placeholder="Select gender" />
                       </SelectTrigger>
@@ -189,8 +184,8 @@ export default function Patients() {
                     />
                   </div>
                 </div>
-                <Button onClick={handleAddPatient} className="w-full">
-                  Add Patient
+                <Button onClick={handleAddPatient} className="w-full" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? "Adding..." : "Add Patient"}
                 </Button>
               </div>
             </DialogContent>
@@ -216,7 +211,9 @@ export default function Patients() {
         <Card>
           <CardHeader>
             <CardTitle>Patient List</CardTitle>
-            <CardDescription>{filteredPatients.length} patients in the system</CardDescription>
+            <CardDescription>
+              {isLoading ? "Loading patients..." : `${filteredPatients.length} patients in the system`}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -233,17 +230,27 @@ export default function Patients() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPatients.length > 0 ? (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                        Loading patients...
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredPatients.length > 0 ? (
                     filteredPatients.map((patient) => (
                       <TableRow key={patient.id}>
                         <TableCell className="font-medium">{patient.patientId}</TableCell>
                         <TableCell>
                           {patient.firstName} {patient.lastName}
                         </TableCell>
-                        <TableCell>{patient.email}</TableCell>
-                        <TableCell>{patient.phone}</TableCell>
-                        <TableCell className="capitalize">{patient.gender}</TableCell>
-                        <TableCell>{patient.dateOfBirth}</TableCell>
+                        <TableCell>{patient.email || "—"}</TableCell>
+                        <TableCell>{patient.phone || "—"}</TableCell>
+                        <TableCell className="capitalize">{patient.gender || "—"}</TableCell>
+                        <TableCell>
+                          {patient.dateOfBirth
+                            ? new Date(patient.dateOfBirth).toISOString().split("T")[0]
+                            : "—"}
+                        </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
                             <Button variant="ghost" size="sm" className="gap-2">
@@ -254,6 +261,7 @@ export default function Patients() {
                               size="sm"
                               className="gap-2 text-red-600 hover:text-red-700"
                               onClick={() => handleDeletePatient(patient.id)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -277,4 +285,3 @@ export default function Patients() {
     </DashboardLayout>
   );
 }
-

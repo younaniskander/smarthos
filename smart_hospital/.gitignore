@@ -6,3 +6,20 @@ dist-ssr
 .env.*
 .DS_Store
 build
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+
+# ML Models
+yolov8m.pt
+
+# User Uploads
+public/uploads/*
+!public/uploads/.gitkeep
+

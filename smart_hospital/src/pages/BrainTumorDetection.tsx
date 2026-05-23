@@ -7,6 +7,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Brain, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "../lib/trpc";
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 export default function BrainTumorDetection() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -15,6 +25,8 @@ export default function BrainTumorDetection() {
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [patientId, setPatientId] = useState("");
   const [doctorNotes, setDoctorNotes] = useState("");
+
+  const analyzeMutation = trpc.patients.analyzeBrainTumor.useMutation();
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -45,23 +57,19 @@ export default function BrainTumorDetection() {
 
     setIsAnalyzing(true);
     try {
-      // Simulate ML model analysis
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const base64Image = await fileToBase64(selectedFile);
+      const result = await analyzeMutation.mutateAsync({
+        patientId,
+        imageName: selectedFile.name,
+        imageBase64: base64Image,
+        notes: doctorNotes,
+      });
 
-      // Mock result
-      const mockResult = {
-        diagnosis: "No tumor detected",
-        confidence: 0.96,
-        tumorType: "N/A",
-        tumorLocation: "N/A",
-        tumorSize: "N/A",
-        malignancyScore: 0.02,
-      };
-
-      setAnalysisResult(mockResult);
-      toast.success("Analysis completed successfully");
-    } catch (error) {
-      toast.error("Analysis failed. Please try again.");
+      setAnalysisResult(result);
+      toast.success("Analysis completed and saved successfully");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Analysis failed. Please make sure the patient ID exists.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -194,8 +202,8 @@ export default function BrainTumorDetection() {
                     </div>
                   </div>
 
-                  <Button className="w-full" variant="outline">
-                    Save Result
+                  <Button className="w-full text-green-700 bg-green-100 hover:bg-green-100 border-green-300" disabled>
+                    Saved to History
                   </Button>
                 </CardContent>
               </Card>

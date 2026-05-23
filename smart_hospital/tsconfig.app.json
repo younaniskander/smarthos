@@ -15,12 +15,11 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "types": ["node"]
   },
-  "include": ["src/App.tsx", "src/main.tsx", "src/pages", "src/components", "src/lib", "src/contexts", "src/_core/hooks"]
+  "include": ["src/**/*"]
 }
